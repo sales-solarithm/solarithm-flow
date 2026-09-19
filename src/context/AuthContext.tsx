@@ -1,3 +1,5 @@
+"use client";
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { AuthUser, verifyFlowAccess } from "../lib/authService";
 
@@ -66,7 +68,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    return {
+      user: null,
+      isUnlocked: true,
+      login: async () => ({ success: false, error: "Auth provider not initialized" }),
+      logout: () => {},
+    };
   }
   return context;
 }

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
-import RootLayout from "./app/layout";
+import AppShell from "./app/AppShell";
 import HomePage from "./app/page";
 import ExpensesPage from "./app/expenses/page";
 import IncomesPage from "./app/incomes/page";
@@ -53,9 +53,9 @@ function AppContent() {
   };
 
   return (
-    <RootLayout currentPath={currentPath} onNavigate={handleNavigate}>
+    <AppShell currentPath={currentPath} onNavigate={handleNavigate}>
       {renderActiveRoute()}
-    </RootLayout>
+    </AppShell>
   );
 }
 

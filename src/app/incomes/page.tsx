@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, ArrowUpCircle, SlidersHorizontal } from "lucide-react";
 import { Income, Invoice } from "@/types";
