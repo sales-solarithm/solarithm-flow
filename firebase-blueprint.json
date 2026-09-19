@@ -1,0 +1,160 @@
+{
+  "entities": {
+    "Expense": {
+      "title": "Expense",
+      "description": "Manual outflow expense record",
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number",
+          "description": "Outflow amount in USD"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the expense item or service",
+          "maxLength": 200
+        },
+        "category": {
+          "type": "string",
+          "description": "Dynamic category identifier",
+          "maxLength": 60
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of transaction (YYYY-MM-DD)",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes or invoice details",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of creation"
+        }
+      },
+      "required": ["amount", "description", "category", "date"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Global application configuration and custom dynamic categories",
+      "type": "object",
+      "properties": {
+        "customCategories": {
+          "type": "array",
+          "description": "List of user-defined custom categories"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp of last update"
+        }
+      }
+    },
+    "Income": {
+      "title": "Income",
+      "description": "Manual inflow revenue record with optional invoice linkage",
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number",
+          "description": "Inflow amount in USD"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the earnings or services rendered",
+          "maxLength": 200
+        },
+        "source": {
+          "type": "string",
+          "description": "Client, company, or platform name source of funds",
+          "maxLength": 100
+        },
+        "category": {
+          "type": "string",
+          "description": "Income category identifier",
+          "maxLength": 60
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of income inflow (YYYY-MM-DD)",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "linkedInvoiceId": {
+          "type": "string",
+          "description": "Optional reference to a Salary Studio invoice"
+        },
+        "paymentType": {
+          "type": "string",
+          "enum": ["Full", "Partial"],
+          "description": "Indicates whether this was a full or partial invoice settlement"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes or remittance reference",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of creation"
+        }
+      },
+      "required": ["amount", "description", "category", "date"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Salary Studio client invoice with payment status tracking",
+      "type": "object",
+      "properties": {
+        "invoiceNumber": {
+          "type": "string",
+          "description": "Invoice reference number (e.g. INV-2026-001)"
+        },
+        "clientName": {
+          "type": "string",
+          "description": "Client or company name being billed"
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "Total invoiced amount in USD"
+        },
+        "amountPaid": {
+          "type": "number",
+          "description": "Cumulative amount paid toward invoice in USD"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Pending", "Partial", "Paid"],
+          "description": "Settlement state of the invoice"
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "Due date (YYYY-MM-DD)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Scope of work or billing description"
+        }
+      },
+      "required": ["invoiceNumber", "clientName", "totalAmount", "status"]
+    }
+  },
+  "firestore": {
+    "/expenses/{expenseId}": {
+      "schema": "Expense",
+      "description": "Collection of logged expense outflows"
+    },
+    "/incomes/{incomeId}": {
+      "schema": "Income",
+      "description": "Collection of logged income inflows with two-way invoice linkage"
+    },
+    "/invoices/{invoiceId}": {
+      "schema": "Invoice",
+      "description": "Salary Studio client invoices"
+    },
+    "/settings/{settingId}": {
+      "schema": "Settings",
+      "description": "Global settings documents, including dynamic categories"
+    }
+  }
+}

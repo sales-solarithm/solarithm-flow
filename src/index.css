@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --color-charcoal: #121212;
+  --color-charcoal-50: #282828;
+  --color-charcoal-100: #222222;
+  --color-charcoal-200: #1e1e1e;
+  --color-charcoal-300: #1a1a1a;
+  --color-charcoal-400: #161616;
+  --color-charcoal-500: #121212;
+  --color-charcoal-600: #0f0f0f;
+  --color-charcoal-700: #0c0c0c;
+  --color-charcoal-800: #090909;
+  --color-charcoal-900: #050505;
+
+  --color-gold: #D4AF37;
+  --color-gold-50: #FAF7EE;
+  --color-gold-100: #F5EED5;
+  --color-gold-200: #ECDDAC;
+  --color-gold-300: #E3CC83;
+  --color-gold-400: #DABC5A;
+  --color-gold-500: #D4AF37;
+  --color-gold-600: #B89428;
+  --color-gold-700: #8C711E;
+  --color-gold-800: #604E15;
+  --color-gold-900: #342A0B;
+
+  --color-surface: #181818;
+  --color-surface-card: #1E1E1E;
+  --color-surface-hover: #252525;
+  --color-surface-border: #2E2E2E;
+
+  --color-primary: #D4AF37;
+  --color-primary-hover: #C5A028;
+  --color-primary-foreground: #121212;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: #121212;
+  color: #f3f4f6;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbars with dark gold aesthetic */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #121212;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #D4AF37;
+}

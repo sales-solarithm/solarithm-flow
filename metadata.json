@@ -1,0 +1,6 @@
+{
+  "name": "Solarithm Flow",
+  "description": "Enterprise cash flow architecture with passwordless role clearance and two-way invoice synchronization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
