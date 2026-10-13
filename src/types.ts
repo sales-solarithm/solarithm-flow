@@ -29,17 +29,24 @@ export interface Income {
   createdAt: string;
 }
 
+/**
+ * Solarithm Insight & Flow Two-Way Synced Invoice Entity
+ */
 export interface Invoice {
   id: string;
-  invoiceNumber: string;
-  clientName: string;
-  totalAmount: number;
-  amountPaid: number;
-  status: "Pending" | "Partial" | "Paid";
-  dueDate: string;
+  invoiceNumber: string; // inv.invNo || inv.invoiceNumber || inv.id
+  clientName: string; // inv.client?.name || inv.clientName || 'Client'
+  totalPayable: number; // inv.totals?.payable ?? inv.totalAmount ?? 0
+  amountReceived: number; // inv.amountReceived ?? inv.amountPaid ?? 0
+  totalAmount?: number; // legacy alias
+  amountPaid?: number; // legacy alias
+  status: "PAID" | "PARTIALLY_PAID" | "PENDING" | "CANCELLED" | "Paid" | "Partial" | "Pending";
+  dueDate?: string;
   description?: string;
+  projectId?: string; // inv.projectId || inv.project?.id || inv.linkedProjectId
   createdAt?: string;
   updatedAt?: string;
+  raw?: any;
 }
 
 export interface CategorySettings {

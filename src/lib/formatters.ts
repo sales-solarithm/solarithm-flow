@@ -26,8 +26,16 @@ export function formatCurrency(value: number | string | undefined | null): strin
 }
 
 /**
+ * Formats value with explicit positive '+' or negative '-' prefix
+ * e.g. formatSigned(150000, "+") => "+₹1,50,000.00"
+ */
+export function formatSigned(value: number, sign: "+" | "-"): string {
+  const formatted = formatCurrency(Math.abs(value));
+  return `${sign}${formatted}`;
+}
+
+/**
  * Clean Rupee tick and label formatter without unnecessary decimals
- * Ideal for Recharts axes and compact stat counters
  * e.g., 50000 => "₹50,000"
  */
 export function formatRupeeTick(value: number | string | undefined | null): string {

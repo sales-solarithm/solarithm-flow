@@ -3,16 +3,14 @@ import {
   doc,
   addDoc,
   deleteDoc,
-  setDoc,
   onSnapshot,
   query,
   orderBy,
-  arrayUnion,
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { Expense } from "../types";
-
+import { sanitizePayload } from "./sanitize";
 import {
   DEFAULT_EXPENSE_CATEGORIES,
   subscribeExpenseCategories,
@@ -22,14 +20,13 @@ import {
 
 export const DEFAULT_CATEGORIES: string[] = DEFAULT_EXPENSE_CATEGORIES;
 
-// Color palette matching dark charcoal and metallic gold aesthetic
 export const CATEGORY_COLORS: Record<string, string> = {
-  Software: "#D4AF37", // Primary Metallic Gold
-  Travel: "#38BDF8", // Sky Blue
-  Hardware: "#F59E0B", // Amber
-  Salaries: "#10B981", // Emerald
-  Operations: "#A855F7", // Purple
-  Marketing: "#F43F5E", // Rose
+  Software: "#D4AF37",
+  Travel: "#38BDF8",
+  Hardware: "#F59E0B",
+  Salaries: "#10B981",
+  Operations: "#A855F7",
+  Marketing: "#F43F5E",
 };
 
 const DYNAMIC_COLOR_PALETTE = [
@@ -50,7 +47,6 @@ export function getCategoryColor(category: string, index = 0): string {
   if (CATEGORY_COLORS[safeCategory]) {
     return CATEGORY_COLORS[safeCategory];
   }
-  // Generate deterministic color based on string hash
   let hash = 0;
   for (let i = 0; i < safeCategory.length; i++) {
     hash = safeCategory.charCodeAt(i) + ((hash << 5) - hash);
@@ -88,7 +84,7 @@ export function subscribeExpenses(
   const colRef = collection(db, EXPENSES_COLLECTION);
   const q = query(colRef, orderBy("date", "desc"));
 
-  const unsubscribe = onSnapshot(
+  return onSnapshot(
     q,
     (snapshot) => {
       const expenses: Expense[] = snapshot.docs.map((docSnap) => {
@@ -96,37 +92,44 @@ export function subscribeExpenses(
         return {
           id: docSnap.id,
           amount: typeof data.amount === "number" ? data.amount : Number(data.amount) || 0,
-          description: data.description || "Untitled Expense",
-          category: data.category || "Uncategorized",
+          description: data.description || "Outflow Expense",
+          category: data.category || "General Operations",
           date: data.date || new Date().toISOString().split("T")[0],
           notes: data.notes || "",
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt || new Date().toISOString(),
+          createdAt:
+            data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt || new Date().toISOString(),
         };
       });
       onUpdate(expenses);
     },
     (err) => {
-      console.warn("Firestore expenses listener error:", err);
+      console.warn("Firestore expenses listener warning:", err);
       onError?.(err);
     }
   );
-
-  return unsubscribe;
 }
 
 /**
- * Adds an outflow expense to Firestore
+ * Adds an outflow expense to Firestore `/expenses`.
+ * Read by Solarithm Insight's Executive Dashboard expense cards.
  */
 export async function createExpenseInFirestore(
   expenseData: Omit<Expense, "id" | "createdAt">
 ): Promise<string> {
   const colRef = collection(db, EXPENSES_COLLECTION);
-  const docRef = await addDoc(colRef, {
-    ...expenseData,
+  const nowIso = new Date().toISOString();
+
+  const payload = sanitizePayload({
     amount: Number(expenseData.amount),
-    createdAt: new Date().toISOString(),
+    description: expenseData.description.trim(),
+    category: expenseData.category.trim() || "Operations",
+    date: expenseData.date || nowIso.split("T")[0],
+    notes: expenseData.notes ? expenseData.notes.trim() : "",
+    createdAt: nowIso,
     serverTimestamp: serverTimestamp(),
   });
+
+  const docRef = await addDoc(colRef, payload);
   return docRef.id;
 }
 

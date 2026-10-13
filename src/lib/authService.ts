@@ -3,9 +3,10 @@ import { db } from "./firebase";
 
 export interface AuthUser {
   id: string;
+  uid?: string;
   email: string;
   name: string;
-  role: "admin" | "owner";
+  role: "owner";
 }
 
 export interface VerifyAuthResult {
@@ -15,8 +16,15 @@ export interface VerifyAuthResult {
 }
 
 /**
- * Validates whether an entered email belongs to a user or employee with strictly
- * "admin" or "owner" role in Firestore.
+ * Access is restricted STRICTLY to Owners and Partners.
+ * Checks `/users` and `/employees` in Firestore.
+ * Grants access ONLY if:
+ * role.toLowerCase() === 'owner' or
+ * assignedRole.toLowerCase() === 'owner' or
+ * designation.toLowerCase().includes('owner') or
+ * designation.toLowerCase().includes('partner')
+ * Regular employees or non-owners are blocked with:
+ * "Access Denied: Owner clearance required."
  */
 export async function verifyFlowAccess(inputEmail: string): Promise<VerifyAuthResult> {
   const cleanEmail = (inputEmail || "").trim().toLowerCase();
@@ -42,10 +50,10 @@ export async function verifyFlowAccess(inputEmail: string): Promise<VerifyAuthRe
         }
       });
     } catch (err) {
-      console.warn("Error querying users collection:", err);
+      console.warn("Notice: Error querying users collection:", err);
     }
 
-    // 2. Fallback check on `employees` collection if not matched yet
+    // 2. Fallback check on `employees` collection if not found in `users`
     if (!matchedDoc) {
       try {
         const empCol = collection(db, "employees");
@@ -57,43 +65,51 @@ export async function verifyFlowAccess(inputEmail: string): Promise<VerifyAuthRe
             matchedDoc = { id: docSnap.id, ...data };
           }
         });
-      } catch {
-        // collection might not exist yet
+      } catch (err) {
+        console.warn("Notice: Error querying employees collection:", err);
       }
     }
 
     if (!matchedDoc) {
       return {
         authorized: false,
-        error: "Access Denied: Admin or Owner clearance required.",
+        error: "Access Denied: Owner clearance required.",
       };
     }
 
-    // 3. Strict clearance verification: must be "admin" or "owner"
-    const rawRole = matchedDoc.role || matchedDoc.assignedRole || "";
-    const normalizedRole = String(rawRole).trim().toLowerCase();
+    // 3. Strict clearance verification: MUST be Owner or Partner
+    const role = String(matchedDoc.role || "").trim().toLowerCase();
+    const assignedRole = String(matchedDoc.assignedRole || "").trim().toLowerCase();
+    const designation = String(matchedDoc.designation || "").trim().toLowerCase();
 
-    if (normalizedRole === "admin" || normalizedRole === "owner") {
+    const isOwner =
+      role === "owner" ||
+      assignedRole === "owner" ||
+      designation.includes("owner") ||
+      designation.includes("partner");
+
+    if (isOwner) {
       return {
         authorized: true,
         user: {
           id: matchedDoc.id,
+          uid: matchedDoc.id,
           email: matchedDoc.email || cleanEmail,
           name: matchedDoc.name || cleanEmail.split("@")[0],
-          role: normalizedRole as "admin" | "owner",
+          role: "owner",
         },
       };
     }
 
     return {
       authorized: false,
-      error: "Access Denied: Admin or Owner clearance required.",
+      error: "Access Denied: Owner clearance required.",
     };
   } catch (err: any) {
     console.error("Error verifying access in Firestore:", err);
     return {
       authorized: false,
-      error: "Access Denied: Admin or Owner clearance required.",
+      error: "Access Denied: Owner clearance required.",
     };
   }
 }

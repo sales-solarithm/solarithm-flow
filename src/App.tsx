@@ -35,7 +35,7 @@ function AppContent() {
     }
   };
 
-  // If locked, render the passwordless lock screen
+  // If locked, render the minimal passwordless lock screen
   if (!isUnlocked) {
     return <LockScreen />;
   }

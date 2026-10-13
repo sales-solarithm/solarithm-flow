@@ -137,6 +137,89 @@
         }
       },
       "required": ["invoiceNumber", "clientName", "totalAmount", "status"]
+    },
+    "Project": {
+      "title": "SolarProject",
+      "description": "Solar design pipeline task tracking and canonical stage progression entity",
+      "type": "object",
+      "properties": {
+        "projectNumber": {
+          "type": "string",
+          "description": "Unique canonical project identifier (e.g. SOL-2026-001)"
+        },
+        "clientName": {
+          "type": "string",
+          "description": "Client or project entity name"
+        },
+        "address": {
+          "type": "string",
+          "description": "Physical site address and utility interconnection location"
+        },
+        "systemSizeKw": {
+          "type": "number",
+          "description": "Total DC solar nameplate capacity in kW"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "UNASSIGNED",
+            "ASSIGNED",
+            "IN_PROGRESS",
+            "UNDER_REVIEW",
+            "REVISION_REQUESTED",
+            "APPROVED",
+            "COMPLETED",
+            "ON_HOLD"
+          ],
+          "description": "Canonical workflow status enum enforced by state machine"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH", "URGENT"],
+          "description": "Project priority clearance level"
+        },
+        "assignedDesignerId": {
+          "type": "string",
+          "description": "UID or identifier of assigned design engineer"
+        },
+        "assignedDesignerName": {
+          "type": "string",
+          "description": "Full name of assigned design engineer"
+        },
+        "assignedDesignerEmail": {
+          "type": "string",
+          "description": "Email of assigned design engineer"
+        },
+        "designAssets": {
+          "type": "array",
+          "description": "Verified CAD, SLD, and permit pack file records"
+        },
+        "stageHistory": {
+          "type": "array",
+          "description": "Immutable chronological timeline audit events (fromStatus, toStatus, updatedBy, updatedAt, note)"
+        },
+        "activityLog": {
+          "type": "array",
+          "description": "Ecosystem interoperability mirror of stageHistory for Nexus Admin and Executive Dashboard"
+        },
+        "revisionCount": {
+          "type": "number",
+          "description": "Cumulative count of engineering revisions requested"
+        },
+        "notes": {
+          "type": "string",
+          "description": "System notes, AHJ instructions, or interconnection specifications"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last modified timestamp"
+        }
+      },
+      "required": ["projectNumber", "clientName", "systemSizeKw", "status"]
     }
   },
   "firestore": {
@@ -155,6 +238,10 @@
     "/settings/{settingId}": {
       "schema": "Settings",
       "description": "Global settings documents, including dynamic categories"
+    },
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Collection of Solar Design Pipeline projects and canonical state progression audit history"
     }
   }
 }

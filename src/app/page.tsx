@@ -1,32 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  TrendingDown,
-  TrendingUp,
-  ArrowRight,
-  FileCheck2,
-  Scale,
-} from "lucide-react";
-import { Expense, Income, Invoice } from "@/types";
-import { subscribeCategories, subscribeExpenses, DEFAULT_CATEGORIES } from "@/lib/expenseService";
-import { subscribeIncomes, subscribeInvoices } from "@/lib/incomeService";
-import { ExpenseAnalytics } from "@/components/ExpenseAnalytics";
-import { ExpenseList } from "@/components/ExpenseList";
-import { formatCurrency } from "@/lib/formatters";
+import { ArrowUpCircle, ArrowDownCircle, ArrowRight } from "lucide-react";
+import { Expense, Income } from "@/types";
+import { subscribeExpenses } from "@/lib/expenseService";
+import { subscribeIncomes } from "@/lib/incomeService";
+import { formatCurrency, formatSigned } from "@/lib/formatters";
 
 export default function HomePage({ onNavigate }: { onNavigate?: (path: string) => void }) {
-  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [incomes, setIncomes] = useState<Income[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const unsubCats = subscribeCategories((cats) => {
-      setCategories(cats);
-    });
-
     const unsubExps = subscribeExpenses((exps) => {
       setExpenses(exps);
       setLoading(false);
@@ -36,164 +22,207 @@ export default function HomePage({ onNavigate }: { onNavigate?: (path: string) =
       setIncomes(incs);
     });
 
-    const unsubInvs = subscribeInvoices((invs) => {
-      setInvoices(invs);
-    });
-
     return () => {
-      unsubCats();
       unsubExps();
       unsubIncs();
-      unsubInvs();
     };
   }, []);
 
-  const totalOutflows = expenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
   const totalInflows = incomes.reduce((sum, inc) => sum + (Number(inc.amount) || 0), 0);
-  const netCashFlow = totalInflows - totalOutflows;
+  const totalOutflows = expenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+  const netPosition = totalInflows - totalOutflows;
 
-  const paidInvoicesCount = invoices.filter((i) => i.status === "Paid").length;
-  const partialInvoicesCount = invoices.filter((i) => i.status === "Partial").length;
+  // Latest 8 transactions for each side
+  const recentInflows = incomes.slice(0, 8);
+  const recentExpenses = expenses.slice(0, 8);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#181818] via-[#1A1A1A] to-[#202020] border border-[#2A2A2A] p-6 sm:p-8 shadow-2xl">
-        <div className="absolute right-0 top-0 -mt-10 -mr-10 w-80 h-80 rounded-full bg-[#D4AF37]/5 blur-3xl pointer-events-none"></div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              Solarithm Flow
-            </h1>
-            <p className="mt-2 text-sm text-zinc-400 max-w-2xl leading-relaxed">
-              Enterprise financial management, real-time cash flow analytics, and client invoice reconciliation.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => onNavigate?.("/incomes")}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-[#121212] font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all flex items-center space-x-2 cursor-pointer"
-            >
-              <TrendingUp className="w-4 h-4 text-[#121212]" />
-              <span>Log Revenue Inflow</span>
-            </button>
-            <button
-              onClick={() => onNavigate?.("/expenses")}
-              className="px-4 py-2.5 rounded-xl bg-[#1E1E1E] hover:bg-[#252525] text-zinc-200 hover:text-white border border-[#333333] text-sm font-medium transition-colors flex items-center space-x-2 cursor-pointer"
-            >
-              <TrendingDown className="w-4 h-4 text-[#D4AF37]" />
-              <span>Expense Outflows</span>
-            </button>
-          </div>
+    <div className="space-y-6">
+      {/* Minimal Header */}
+      <div className="flex items-center justify-between pb-3 border-b border-[#262626]">
+        <div>
+          <h1 className="text-xl font-bold text-white tracking-tight">
+            Cash Flow Terminal
+          </h1>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Two-way financial synchronization with Solarithm Insight
+          </p>
         </div>
       </div>
 
-      {/* Financial Health Overview (4 Metric Cards) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Inflow */}
-        <div className="rounded-xl bg-[#181818] border border-[#2A2A2A] p-4">
-          <div className="flex items-center justify-between text-zinc-400 text-xs">
-            <span>Total Inflow</span>
-            <div className="p-1 rounded-md bg-[#222] text-emerald-400">
-              <TrendingUp className="w-3.5 h-3.5" />
-            </div>
+      {/* Minimal Top 3 Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Total Inflows */}
+        <div className="rounded-xl bg-[#181818] border border-[#262626] p-4 space-y-2">
+          <div className="flex items-center justify-between text-xs text-zinc-400">
+            <span>Total Inflows</span>
+            <ArrowUpCircle className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="mt-2 text-xl sm:text-2xl font-bold font-mono text-emerald-400">
-            +{formatCurrency(totalInflows)}
+          <div className="text-2xl font-bold font-mono text-emerald-400 tracking-tight">
+            {formatSigned(totalInflows, "+")}
           </div>
-          <p className="mt-1 text-[11px] text-zinc-500 font-mono">
-            {incomes.length} revenue entries
+          <p className="text-[11px] font-mono text-zinc-500">
+            {incomes.length} inflow entries
           </p>
         </div>
 
-        {/* Total Outflow */}
-        <div className="rounded-xl bg-[#181818] border border-[#2A2A2A] p-4">
-          <div className="flex items-center justify-between text-zinc-400 text-xs">
-            <span>Total Outflow</span>
-            <div className="p-1 rounded-md bg-[#222] text-[#D4AF37]">
-              <TrendingDown className="w-3.5 h-3.5" />
-            </div>
+        {/* Total Outflows */}
+        <div className="rounded-xl bg-[#181818] border border-[#262626] p-4 space-y-2">
+          <div className="flex items-center justify-between text-xs text-zinc-400">
+            <span>Total Outflows</span>
+            <ArrowDownCircle className="w-4 h-4 text-rose-400" />
           </div>
-          <div className="mt-2 text-xl sm:text-2xl font-bold font-mono text-white">
-            -{formatCurrency(totalOutflows)}
+          <div className="text-2xl font-bold font-mono text-rose-400 tracking-tight">
+            {formatSigned(totalOutflows, "-")}
           </div>
-          <p className="mt-1 text-[11px] text-zinc-500 font-mono">
-            {expenses.length} outflow expenses
+          <p className="text-[11px] font-mono text-zinc-500">
+            {expenses.length} outflow entries
           </p>
         </div>
 
-        {/* Net Cash Flow */}
-        <div className="rounded-xl bg-[#181818] border border-[#2A2A2A] p-4">
-          <div className="flex items-center justify-between text-zinc-400 text-xs">
-            <span>Net Cash Position</span>
-            <div className="p-1 rounded-md bg-[#222] text-[#D4AF37]">
-              <Scale className="w-3.5 h-3.5" />
-            </div>
+        {/* Net Position */}
+        <div className="rounded-xl bg-[#181818] border border-[#262626] p-4 space-y-2">
+          <div className="flex items-center justify-between text-xs text-zinc-400">
+            <span>Net Position</span>
+            <span
+              className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                netPosition >= 0
+                  ? "bg-emerald-950/60 text-emerald-400 border border-emerald-900/60"
+                  : "bg-rose-950/60 text-rose-400 border border-rose-900/60"
+              }`}
+            >
+              {netPosition >= 0 ? "SURPLUS" : "DEFICIT"}
+            </span>
           </div>
           <div
-            className={`mt-2 text-xl sm:text-2xl font-bold font-mono ${
-              netCashFlow >= 0 ? "text-emerald-400" : "text-rose-400"
+            className={`text-2xl font-bold font-mono tracking-tight ${
+              netPosition >= 0 ? "text-emerald-400" : "text-rose-400"
             }`}
           >
-            {netCashFlow >= 0 ? `+${formatCurrency(netCashFlow)}` : formatCurrency(netCashFlow)}
+            {netPosition >= 0 ? formatSigned(netPosition, "+") : formatSigned(netPosition, "-")}
           </div>
-          <p className="mt-1 text-[11px] text-zinc-500">
-            {netCashFlow >= 0 ? "Operating Surplus" : "Operating Deficit"}
+          <p className="text-[11px] text-zinc-500">
+            {netPosition >= 0 ? "Operating Surplus" : "Operating Deficit"}
           </p>
         </div>
+      </div>
 
-        {/* Salary Studio Two-Way Sync */}
-        <div className="rounded-xl bg-[#181818] border border-[#2A2A2A] p-4">
-          <div className="flex items-center justify-between text-zinc-400 text-xs">
-            <span>Salary Studio Invoices</span>
-            <div className="p-1 rounded-md bg-[#222] text-[#D4AF37]">
-              <FileCheck2 className="w-3.5 h-3.5" />
+      {/* Two Clean Side-by-Side Tables */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left: Recent Inflow Payments */}
+        <div className="rounded-xl bg-[#181818] border border-[#262626] overflow-hidden flex flex-col">
+          <div className="p-3.5 border-b border-[#262626] flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <h2 className="text-xs font-bold text-white uppercase tracking-wider">
+                Recent Inflow Payments
+              </h2>
             </div>
+            <button
+              onClick={() => onNavigate?.("/incomes")}
+              className="text-xs text-emerald-400 hover:text-emerald-300 font-medium flex items-center space-x-1 cursor-pointer"
+            >
+              <span>View All</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <div className="mt-2 text-xl sm:text-2xl font-bold font-mono text-[#D4AF37]">
-            {paidInvoicesCount}/{invoices.length} Paid
+
+          <div className="flex-1 overflow-x-auto">
+            {loading ? (
+              <div className="p-8 text-center text-xs text-zinc-500">Loading inflows...</div>
+            ) : recentInflows.length === 0 ? (
+              <div className="p-8 text-center text-xs text-zinc-500">No inflow payments recorded.</div>
+            ) : (
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="bg-[#141414] text-zinc-400 border-b border-[#262626]">
+                    <th className="py-2.5 px-3 font-semibold">Date</th>
+                    <th className="py-2.5 px-3 font-semibold">Client / Source</th>
+                    <th className="py-2.5 px-3 text-right font-semibold">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#222222]">
+                  {recentInflows.map((inc) => (
+                    <tr key={inc.id} className="hover:bg-[#1E1E1E]/50 transition-colors">
+                      <td className="py-2.5 px-3 text-zinc-400 font-mono whitespace-nowrap">
+                        {inc.date}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className="text-white font-medium block truncate max-w-[180px]">
+                          {inc.source}
+                        </span>
+                        {inc.description && (
+                          <span className="text-[11px] text-zinc-500 truncate block max-w-[180px]">
+                            {inc.description}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono font-semibold text-emerald-400 whitespace-nowrap">
+                        +{formatCurrency(inc.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
-          <p className="mt-1 text-[11px] text-zinc-500 font-mono">
-            {partialInvoicesCount} in partial status
-          </p>
         </div>
-      </div>
 
-      {/* Dynamic Recharts Analytics */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-white tracking-tight">
-              Expense Distribution Analytics
-            </h2>
-            <p className="text-xs text-zinc-400">
-              Category-wise expenditure breakdown
-            </p>
+        {/* Right: Recent Outflow Expenses */}
+        <div className="rounded-xl bg-[#181818] border border-[#262626] overflow-hidden flex flex-col">
+          <div className="p-3.5 border-b border-[#262626] flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="w-2 h-2 rounded-full bg-rose-400" />
+              <h2 className="text-xs font-bold text-white uppercase tracking-wider">
+                Recent Outflow Expenses
+              </h2>
+            </div>
+            <button
+              onClick={() => onNavigate?.("/expenses")}
+              className="text-xs text-rose-400 hover:text-rose-300 font-medium flex items-center space-x-1 cursor-pointer"
+            >
+              <span>View All</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <button
-            onClick={() => onNavigate?.("/expenses")}
-            className="text-xs text-[#D4AF37] hover:text-[#E5C345] font-semibold flex items-center space-x-1"
-          >
-            <span>Manage Expenses</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
 
-        <ExpenseAnalytics expenses={expenses} categories={categories} />
-      </div>
-
-      {/* Transaction List */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-white tracking-tight">
-              Recent Outflow Transactions
-            </h2>
+          <div className="flex-1 overflow-x-auto">
+            {loading ? (
+              <div className="p-8 text-center text-xs text-zinc-500">Loading expenses...</div>
+            ) : recentExpenses.length === 0 ? (
+              <div className="p-8 text-center text-xs text-zinc-500">No outflow expenses recorded.</div>
+            ) : (
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="bg-[#141414] text-zinc-400 border-b border-[#262626]">
+                    <th className="py-2.5 px-3 font-semibold">Date</th>
+                    <th className="py-2.5 px-3 font-semibold">Category</th>
+                    <th className="py-2.5 px-3 font-semibold">Description</th>
+                    <th className="py-2.5 px-3 text-right font-semibold">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#222222]">
+                  {recentExpenses.map((exp) => (
+                    <tr key={exp.id} className="hover:bg-[#1E1E1E]/50 transition-colors">
+                      <td className="py-2.5 px-3 text-zinc-400 font-mono whitespace-nowrap">
+                        {exp.date}
+                      </td>
+                      <td className="py-2.5 px-3 text-zinc-300 font-mono text-[11px] whitespace-nowrap">
+                        {exp.category}
+                      </td>
+                      <td className="py-2.5 px-3 text-zinc-200 truncate max-w-[160px]">
+                        {exp.description}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono font-semibold text-rose-400 whitespace-nowrap">
+                        -{formatCurrency(exp.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
-
-        <ExpenseList expenses={expenses} categories={categories} />
       </div>
     </div>
   );
